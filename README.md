@@ -10,6 +10,7 @@
 - Phong-Shading
 - Render CubeTexture
 - Texture Class
+- Shadow Mapping
 
 ## Reference
 DIRECTX TEXTURE LIBRARY (DirectXTex)
