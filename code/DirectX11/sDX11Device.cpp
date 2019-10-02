@@ -1,12 +1,13 @@
 ﻿//! -------------------------------------------------------------------------------------
 //! Include
 //! -------------------------------------------------------------------------------------
-#include "Utility/nFile.h"
-#include "Utility/nString.h"
 #include "Application/sWindow.h"
 #include "Application/sTime.h"
 #include "sDX11Device.h"
 #include "nFigureData.h"
+#include "Utility/nFile.h"
+#include "Utility/nString.h"
+#include "Utility/nModelLoader.h"
 
 //! -------------------------------------------------------------------------------------
 //! Flags
@@ -140,11 +141,20 @@ void cDX11Device::setup() {
 	//! create renderObject
 	for (int i = 0; i < 8; i++) {
 		cDX11RenderObject* pCube = new cDX11RenderObject();
-		Vertex* vertices = nullptr;
-		UINT vNum, iNum, *indices = nullptr;
-		nFigureData::getCube(vertices, vNum, indices, iNum);
-		pCube->createVertexBuffer(vertices, vNum);
-		pCube->createIndexBuffer(indices, iNum);
+		if (i == 4) {
+			//! load bunny
+			std::vector<Vertex> vertices;
+			std::vector<UINT>   indices;
+			nModelLoader::loadObj(nFile::getResourcePath("resource/mesh/bunny.obj"), vertices, indices);
+			pCube->createVertexBuffer(vertices.data(), (UINT)vertices.size());
+			pCube->createIndexBuffer(indices.data(), (UINT)indices.size());
+		} else {
+			Vertex* vertices = nullptr;
+			UINT vNum, iNum, *indices = nullptr;
+			nFigureData::getCube(vertices, vNum, indices, iNum);
+			pCube->createVertexBuffer(vertices, vNum);
+			pCube->createIndexBuffer(indices, iNum);
+		}
 		pCube->attach(&mpVSShader, nullptr, &mpPSShader, &mpInputLayout);
 		if (i == 7) {
 			pCube->setTexture(dynamicTex);
@@ -157,7 +167,11 @@ void cDX11Device::setup() {
 		if (i == 5) {
 			pCube->createRasterizerState(D3D11_CULL_NONE, D3D11_FILL_WIREFRAME);
 			pCube->attach(&mpPSShaderNoTexture);
-		} else {
+		} else 
+		if (i == 4) {
+			pCube->attach(&mpPSShaderNoTexture);
+		}
+		else {
 			pCube->createTexture(nFile::getResourcePath("resource/texture/mono.png"));
 			pCube->createSamplerState();
 		}
@@ -258,8 +272,15 @@ void cDX11Device::render() {
 			float rotate = (float)(3.14f * 2) / (mpRenderObjectList.size() - 1) * (i - 1);
 			float radius = 2.f;
 			DirectX::XMMATRIX matrix = DirectX::XMMatrixIdentity();
-			matrix *= DirectX::XMMatrixRotationY(theta + rotate);
-			matrix *= DirectX::XMMatrixTranslation(sinf(theta)*radius, 0.0f, cosf(theta)*radius);
+			if (i == 4) {
+				float size = 7.f;
+				matrix *= DirectX::XMMatrixScaling(size, size, size);
+				matrix *= DirectX::XMMatrixRotationY(theta + rotate);
+				matrix *= DirectX::XMMatrixTranslation(sinf(theta)*radius, -1.f, cosf(theta)*radius);
+			} else {
+				matrix *= DirectX::XMMatrixRotationY(theta + rotate);
+				matrix *= DirectX::XMMatrixTranslation(sinf(theta)*radius, 0.0f, cosf(theta)*radius);
+			}
 			obj->updateWorldMatrix(matrix);
 		}
 		i++;

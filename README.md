@@ -15,3 +15,7 @@
 ## Reference
 DIRECTX TEXTURE LIBRARY (DirectXTex)
 github: https://github.com/microsoft/DirectXTex
+
+Stanford Computer Graphics Laboratory
+page: https://graphics.stanford.edu/
+ - Stanford Bunny (resource/mesh/bunny.obj)
