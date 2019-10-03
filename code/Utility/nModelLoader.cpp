@@ -24,9 +24,11 @@ namespace nModelLoader {
 			case eMode::v:
 				{
 					Vertex vt = {};
-					sscanf_s(line.c_str(), "v %f %f %f", &vt.position.x, &vt.position.y, &vt.position.z);
-					vt.color  = { 1.f, 1.f, 1.f, 1.f };
-					vt.normal = vt.position;
+					float x, y, z;
+					sscanf_s(line.c_str(), "v %f %f %f", &x, &y, &z);
+					vt.position = { x, y, z, 1.0f };
+					vt.color    = { 1.f, 1.f, 1.f, 1.f };
+					vt.normal   = { 0.f, 0.f, 0.f };
 					vertices.push_back(std::move(vt));
 					countV++;
 				}
@@ -43,6 +45,18 @@ namespace nModelLoader {
 				break;
 			}
 		}
+		{
+			using namespace DirectX;
+			for (int i = 0; i < indices.size(); i += 3) {
+				auto vec0 = XMVectorSubtract(vertices[indices[i+1]].position, vertices[indices[i+0]].position);
+				auto vec1 = XMVectorSubtract(vertices[indices[i+2]].position, vertices[indices[i+0]].position);
+				auto normal = XMVector3Normalize(XMVector3Cross(vec0, vec1));
+				vertices[indices[i+0]].normal = XMVector3Normalize(XMVectorAdd(vertices[indices[i+0]].normal, normal));
+				vertices[indices[i+1]].normal = XMVector3Normalize(XMVectorAdd(vertices[indices[i+1]].normal, normal));
+				vertices[indices[i+2]].normal = XMVector3Normalize(XMVectorAdd(vertices[indices[i+2]].normal, normal));
+			}
+		}
+		
 		ifs.close();
 	}
 };

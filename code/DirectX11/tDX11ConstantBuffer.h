@@ -12,8 +12,8 @@ enum eCBufferSlot {
 };
 
 struct Vertex {
-	DirectX::XMFLOAT3 position;
-	DirectX::XMFLOAT3 normal;
+	DirectX::XMVECTOR position;
+	DirectX::XMVECTOR normal;
 	DirectX::XMFLOAT4 color;
 	DirectX::XMFLOAT2 texcoord;
 };

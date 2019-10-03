@@ -9,6 +9,8 @@ cDX11RenderObject::cDX11RenderObject():
 	,mIndicesNum                (0)
 	,mTexture                   ()
 	,mpRasterizerState          (nullptr)
+	,mPrimitiveTopology         (D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
+	,mShadowCasting             (true)
 	,mpRef_VSShader             (nullptr)
 	,mpRef_GSShader             (nullptr)
 	,mpRef_PSShader             (nullptr)
@@ -43,6 +45,7 @@ void cDX11RenderObject::render(ID3D11DeviceContext* context, bool updateShader, 
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
 	context->IASetInputLayout(*mpRef_InputLayout);
+	context->IASetPrimitiveTopology(mPrimitiveTopology);
 	context->IASetVertexBuffers(0, 1, &mpVertexBuffer, &stride, &offset);
 	context->IASetIndexBuffer(mpIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 	if (updateRasterizer) {
@@ -91,6 +94,14 @@ void cDX11RenderObject::createRasterizerState(D3D11_CULL_MODE cull, D3D11_FILL_M
 //! @brief サンプラーステートの作成
 void cDX11RenderObject::createSamplerState() {
 	mTexture.createSamplerState();
+}
+//! @brief 描画方法の指定
+void cDX11RenderObject::setPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY topology) {
+	mPrimitiveTopology = topology;
+}
+//! @brief 影を落とすかどうか
+void cDX11RenderObject::setShadowCasting(bool doShadowCasting) {
+	mShadowCasting = doShadowCasting;
 }
 
 //! @brief カリング方向の取得

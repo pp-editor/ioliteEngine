@@ -59,7 +59,7 @@ cDX11Device::~cDX11Device() {
 void cDX11Device::setup() {
 	createDevice();
 
-	//! write clear Texture
+	//! write clear-color Texture
 	cDX11Texture dynamicTex;
 	dynamicTex.createTexture(128, 128, cDX11Texture::eTexDescType::CPUdynamic);
 	{
@@ -138,51 +138,71 @@ void cDX11Device::setup() {
 	dynamicCube.createShaderResourceView();
 	dynamicCube.createSamplerState();
 
+	enum class eFigureType : int { Cube, WiredCube, Quad };
+	auto loadCube = [](cDX11RenderObject* target, eFigureType type) {
+		Vertex* vertices          = nullptr;
+		UINT vNum, iNum, *indices = nullptr;
+		switch (type) {
+		case eFigureType::Cube:      nFigureData::getCube(vertices, vNum, indices, iNum);      break;
+		case eFigureType::WiredCube: nFigureData::getWiredCube(vertices, vNum, indices, iNum); break;
+		case eFigureType::Quad:      nFigureData::getQuad(vertices, vNum, indices, iNum);	   break;
+		}
+		target->createVertexBuffer(vertices, vNum);
+		target->createIndexBuffer(indices, iNum);
+	};
+	auto loadBunny = [](cDX11RenderObject* target) {
+		std::vector<Vertex> vertices;
+		std::vector<UINT>   indices;
+		nModelLoader::loadObj(nFile::getResourcePath("resource/mesh/bunny.obj"), vertices, indices);
+		target->createVertexBuffer(vertices.data(), (UINT)vertices.size());
+		target->createIndexBuffer(indices.data(), (UINT)indices.size());
+	};
+
 	//! create renderObject
 	for (int i = 0; i < 8; i++) {
-		cDX11RenderObject* pCube = new cDX11RenderObject();
-		if (i == 4) {
-			//! load bunny
-			std::vector<Vertex> vertices;
-			std::vector<UINT>   indices;
-			nModelLoader::loadObj(nFile::getResourcePath("resource/mesh/bunny.obj"), vertices, indices);
-			pCube->createVertexBuffer(vertices.data(), (UINT)vertices.size());
-			pCube->createIndexBuffer(indices.data(), (UINT)indices.size());
-		} else {
-			Vertex* vertices = nullptr;
-			UINT vNum, iNum, *indices = nullptr;
-			nFigureData::getCube(vertices, vNum, indices, iNum);
-			pCube->createVertexBuffer(vertices, vNum);
-			pCube->createIndexBuffer(indices, iNum);
-		}
-		pCube->attach(&mpVSShader, nullptr, &mpPSShader, &mpInputLayout);
-		if (i == 7) {
-			pCube->setTexture(dynamicTex);
-			pCube->createRasterizerState(D3D11_CULL_NONE);
-		} else 
-		if (i == 6) {
-			pCube->setTexture(dynamicCube);
-			pCube->attach(&mpPSShaderCube);
-		} else 
-		if (i == 5) {
-			pCube->createRasterizerState(D3D11_CULL_NONE, D3D11_FILL_WIREFRAME);
-			pCube->attach(&mpPSShaderNoTexture);
-		} else 
-		if (i == 4) {
-			pCube->attach(&mpPSShaderNoTexture);
-		}
-		else {
-			pCube->createTexture(nFile::getResourcePath("resource/texture/mono.png"));
-			pCube->createSamplerState();
+		cDX11RenderObject* pObj = new cDX11RenderObject();
+		pObj->attach(&mpVSShader, nullptr, &mpPSShader, &mpInputLayout);
+		switch(i){
+		case 7:	//!< alpha cube
+			loadCube(pObj, eFigureType::Cube);
+			pObj->setTexture(dynamicTex);
+			pObj->createRasterizerState(D3D11_CULL_NONE);
+			pObj->setShadowCasting(false);
+			break;
+		case 6: //!< cube-mapping
+			loadCube(pObj, eFigureType::Cube);
+			pObj->setTexture(dynamicCube);
+			pObj->attach(&mpPSShaderCube);
+			break;
+		case 5: //!< wireframe cube
+			loadCube(pObj, eFigureType::Cube);
+			pObj->createRasterizerState(D3D11_CULL_NONE, D3D11_FILL_WIREFRAME);
+			pObj->attach(&mpPSShaderNoTexture);
+			pObj->setShadowCasting(false);
+			break;
+		case 4: //!< stanford bunny
+			loadBunny(pObj);
+			pObj->attach(&mpPSShaderNoTexture);
+			break;
+		case 3: //!< built with line list cube
+			loadCube(pObj, eFigureType::WiredCube);
+			pObj->attach(&mpPSShaderNoTexture);
+			pObj->setShadowCasting(false);
+			pObj->setPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+			break;
+		default:
+			loadCube(pObj, eFigureType::Cube);
+			pObj->createTexture(nFile::getResourcePath("resource/texture/mono.png"));
+			pObj->createSamplerState();
 		}
 		DirectX::XMMATRIX matrix = DirectX::XMMatrixIdentity();
-		pCube->updateWorldMatrix(matrix);
+		pObj->updateWorldMatrix(matrix);
 		Material material;
 		material.ambient  = { 1.0f, 1.0f, 1.0f, 0.0f };
 		material.diffuse  = { 1.0f, 1.0f, 1.0f, 0.0f };
 		material.specular = { 1.0f, 1.0f, 1.0f,20.0f };
-		pCube->updateMaterial(material);
-		mpRenderObjectList.push_back(pCube);
+		pObj->updateMaterial(material);
+		mpRenderObjectList.push_back(pObj);
 	}
 }
 //! @brief 
@@ -268,7 +288,7 @@ void cDX11Device::render() {
 			obj->updateWorldMatrix(matrix);
 		}
 		else {
-			float theta = (float)(3.14f * 2) / (mpRenderObjectList.size() - 1) * (i - 1) + time;
+			float theta  = (float)(3.14f * 2) / (mpRenderObjectList.size() - 1) * (i - 1) + time;
 			float rotate = (float)(3.14f * 2) / (mpRenderObjectList.size() - 1) * (i - 1);
 			float radius = 2.f;
 			DirectX::XMMATRIX matrix = DirectX::XMMatrixIdentity();
@@ -286,24 +306,6 @@ void cDX11Device::render() {
 		i++;
 	}
 	
-#if _DEBUG	//!< check depth texture
-	static bool isHit = false;
-	if ((GetAsyncKeyState(VK_SPACE) & 0x8000)) {
-		if (isHit == false) {
-			DirectX::ScratchImage image;
-			if (FAILED(DirectX::CaptureTexture(mpDevice, mpContext, *mpShadowMapDepth.get(), image))) {
-				throw std::runtime_error("error: CaptureTexture");
-			}
-			if (FAILED(DirectX::SaveToDDSFile(image.GetImages(), image.GetImageCount(), image.GetMetadata(), DirectX::DDS_FLAGS_NONE, L"shadowMap.dds"))) {
-				throw std::runtime_error("error: SaveToDDSFile");
-			}
-			isHit = true;
-		}
-	} else {
-		isHit = false;
-	}
-#endif
-
 	//! update resource
 	mpContext->UpdateSubresource(mpConstant_Perspective,      0, NULL, &mPerspective,      0, 0);
 	mpContext->UpdateSubresource(mpConstant_PerspectiveLight, 0, NULL, &mPerspectiveLight, 0, 0);
@@ -331,11 +333,8 @@ void cDX11Device::render() {
 	mpContext->OMSetRenderTargets(1, pRTV, *mpShadowMapDepth.getDSV());
 	mpContext->ClearDepthStencilView(*mpShadowMapDepth.getDSV(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	for (auto obj : mpRenderObjectList) {
-		if (obj->isCullingBack()) {
-			mpContext->RSSetState(mpShadowRasterizer);
-			obj->render(mpContext, false, false);
-		} else {
-			obj->render(mpContext, false, true);
+		if (obj->isShadowCasting()) {
+			obj->render(mpContext, false);
 		}
 	}
 
@@ -459,8 +458,8 @@ void cDX11Device::createDevice() {
 
 	//! create inputLayout
 	D3D11_INPUT_ELEMENT_DESC layout[] = {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "NORMAL"  , 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL"  , 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "COLOR"   , 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};

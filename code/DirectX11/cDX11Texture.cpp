@@ -149,11 +149,11 @@ void cDX11Texture::copySubResource(ID3D11Texture2D* pTexture, UINT index, UINT M
 //! -------------------------------------------------------------------------------------
 //! @brief 深度テクスチャか
 bool cDX11Texture::isDepthTexutre() {
-	return (getTextureDesc().BindFlags & D3D11_BIND_DEPTH_STENCIL);
+	return !!(getTextureDesc().BindFlags & D3D11_BIND_DEPTH_STENCIL);
 }
 //! @brief テクスチャがキューブマップか
 bool cDX11Texture::isCubeMap() {
-	return (getTextureDesc().MiscFlags & D3D11_RESOURCE_MISC_TEXTURECUBE);
+	return !!(getTextureDesc().MiscFlags & D3D11_RESOURCE_MISC_TEXTURECUBE);
 }
 //! @brief テクスチャサイズ取得
 void cDX11Texture::getTextureSize(UINT& width, UINT &height) {

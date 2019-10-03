@@ -19,6 +19,8 @@ public:
 	void setTexture        (const cDX11Texture& texture);
 	void createRasterizerState(D3D11_CULL_MODE cull = D3D11_CULL_BACK, D3D11_FILL_MODE fill = D3D11_FILL_SOLID);
 	void createSamplerState();
+	void setPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY topology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	void setShadowCasting(bool doShadowCasting);
 
 private:
 	D3D11_CULL_MODE getCullingMode();
@@ -26,6 +28,7 @@ public:
 	bool isCullingBack()  { return getCullingMode() == D3D11_CULL_BACK; }
 	bool isCullingFront() { return getCullingMode() == D3D11_CULL_FRONT; }
 	bool isCullingNone()  { return getCullingMode() == D3D11_CULL_NONE; }
+	bool isShadowCasting(){ return mShadowCasting; }
 
 public:
 	void attach(ID3D11VertexShader**   vs)    { mpRef_VSShader    = vs; }
@@ -51,6 +54,8 @@ private:
 	UINT                       mIndicesNum;
 	cDX11Texture               mTexture;
 	ID3D11RasterizerState*     mpRasterizerState;
+	D3D11_PRIMITIVE_TOPOLOGY   mPrimitiveTopology;
+	bool                       mShadowCasting;
 
 private:
 	ID3D11VertexShader**       mpRef_VSShader;

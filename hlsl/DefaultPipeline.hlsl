@@ -59,13 +59,13 @@ struct GSPSInput {
 GSPSInput vsMain(VSInput input) {
 	GSPSInput output = (GSPSInput)0;
 	//! calc object
-	float4 WorldPos  = mul(World, float4(input.Position, 1.0f));
+	float4 WorldPos  = mul(World, float4(input.Position.xyz, 1.0f));
 	output.Position  = mul(View,  WorldPos);
 	output.Position  = mul(Proj,  output.Position);
-	float3 normal    = normalize(mul(float4(input.Normal, 1.0f), World).xyz);
+	float3 normal    = normalize(mul(float4(input.Normal.xyz, 1.0f), World).xyz);
 
 	//! calc light
-	output.LightViewPos = mul(World, float4(input.Position, 1.0f));
+	output.LightViewPos = mul(World, float4(input.Position.xyz, 1.0f));
 	output.LightViewPos = mul(LightView, output.LightViewPos);
 	output.LightViewPos = mul(LightProj, output.LightViewPos);
 
@@ -74,7 +74,7 @@ GSPSInput vsMain(VSInput input) {
 	output.Normal       = normal;
 	output.Color        = input.Color;
 	output.TexCoord     = input.TexCoord;
-	output.CubeCoord    = input.Position;
+	output.CubeCoord    = input.Position.xyz;
 	output.LightPos     = normalize(DLight_position.xyz - WorldPos.xyz);
 	return output;
 }
@@ -148,7 +148,7 @@ void psMainCubeMap(in GSPSInput input, out float4 output : SV_TARGET0) {
 
 GSPSInput vsMainDepth(VSInput input) {
 	GSPSInput output = (GSPSInput)0;
-	float4 WorldPos  = mul(World, float4(input.Position, 1.0f));
+	float4 WorldPos  = mul(World, float4(input.Position.xyz, 1.0f));
 	float4 ViewPos   = mul(LightView,  WorldPos);
 	float4 ProjPos   = mul(LightProj,  ViewPos);
 	output.Position  = ProjPos;

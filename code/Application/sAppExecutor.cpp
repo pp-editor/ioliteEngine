@@ -39,11 +39,14 @@ void sAppExecutor::run(){
 	//! application core
 	std::thread mainThread([&]() {
 		ITime->reset();
+		ITime->setFiexedTime(1.f/60);
 		while (true) {
 			ITime->update();
-			mApp->update();
-			mApp->draw();
-			IDevice->render();
+			if (ITime->isElapsedFixedTime()) {
+				mApp->update();
+				mApp->draw();
+				IDevice->render();
+			}
 			std::lock_guard<std::mutex> lock(mtx);
 			if (isEndThread) break;
 		}
