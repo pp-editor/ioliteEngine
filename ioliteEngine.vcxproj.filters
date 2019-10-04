@@ -26,7 +26,7 @@
     <Filter Include="LibraryFiles">
       <UniqueIdentifier>{74f53754-a960-4f02-a110-a29cbb1324f5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="SourceFiles\Game">
+    <Filter Include="SourceFiles\DirectX12\Game">
       <UniqueIdentifier>{b6d206f9-d927-44a4-bafc-ac691d1b1d89}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -71,7 +71,7 @@
       <Filter>SourceFiles\Utility</Filter>
     </ClCompile>
     <ClCompile Include="code\Game\cDX11App.cpp">
-      <Filter>SourceFiles\Game</Filter>
+      <Filter>SourceFiles\DirectX12\Game</Filter>
     </ClCompile>
     <ClCompile Include="code\Application\aApp.cpp">
       <Filter>SourceFiles\Application</Filter>
@@ -84,6 +84,9 @@
     </ClCompile>
     <ClCompile Include="code\Utility\nModelLoader.cpp">
       <Filter>SourceFiles\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="code\DirectX11\uDX11RenderScene_Demo00.cpp">
+      <Filter>SourceFiles\DirectX11</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -127,7 +130,7 @@
       <Filter>SourceFiles\DirectX11</Filter>
     </ClInclude>
     <ClInclude Include="code\Game\cDX11App.h">
-      <Filter>SourceFiles\Game</Filter>
+      <Filter>SourceFiles\DirectX12\Game</Filter>
     </ClInclude>
     <ClInclude Include="code\Application\aApp.h">
       <Filter>SourceFiles\Application</Filter>
@@ -140,6 +143,12 @@
     </ClInclude>
     <ClInclude Include="code\Utility\nModelLoader.h">
       <Filter>SourceFiles\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="code\DirectX11\cDX11RenderScene.h">
+      <Filter>SourceFiles\DirectX11</Filter>
+    </ClInclude>
+    <ClInclude Include="code\DirectX11\uDX11RenderScene_Demo00.h">
+      <Filter>SourceFiles\DirectX11</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

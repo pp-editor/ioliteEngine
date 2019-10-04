@@ -25,10 +25,12 @@ public:
 private:
 	D3D11_CULL_MODE getCullingMode();
 public:
-	bool isCullingBack()  { return getCullingMode() == D3D11_CULL_BACK; }
-	bool isCullingFront() { return getCullingMode() == D3D11_CULL_FRONT; }
-	bool isCullingNone()  { return getCullingMode() == D3D11_CULL_NONE; }
-	bool isShadowCasting(){ return mShadowCasting; }
+	WorldMatrix* getWorldMatrix() { return &mWorldMatrix; }
+	Material*    getMaterial   () { return &mMaterial; }
+	bool         isCullingBack()  { return getCullingMode() == D3D11_CULL_BACK; }
+	bool         isCullingFront() { return getCullingMode() == D3D11_CULL_FRONT; }
+	bool         isCullingNone()  { return getCullingMode() == D3D11_CULL_NONE; }
+	bool         isShadowCasting(){ return mShadowCasting; }
 
 public:
 	void attach(ID3D11VertexShader**   vs)    { mpRef_VSShader    = vs; }

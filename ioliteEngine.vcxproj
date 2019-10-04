@@ -153,6 +153,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="code\DirectX11\uDX11RenderScene_Demo00.cpp" />
     <ClCompile Include="code\DirectX12\sDX12Device.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
@@ -191,11 +192,13 @@
     <ClInclude Include="code\Application\aRenderDevice.h" />
     <ClInclude Include="code\Application\sTime.h" />
     <ClInclude Include="code\Application\sWindow.h" />
+    <ClInclude Include="code\DirectX11\cDX11RenderScene.h" />
     <ClInclude Include="code\DirectX11\cDX11Texture.h" />
     <ClInclude Include="code\DirectX11\sDX11Device.h" />
     <ClInclude Include="code\DirectX11\cDX11RenderObject.h" />
     <ClInclude Include="code\DirectX11\tDX11ConstantBuffer.h" />
     <ClInclude Include="code\DirectX11\nFigureData.h" />
+    <ClInclude Include="code\DirectX11\uDX11RenderScene_Demo00.h" />
     <ClInclude Include="code\DirectX12\sDX12Device.h" />
     <ClInclude Include="code\Game\cDX11App.h" />
     <ClInclude Include="code\main.h" />

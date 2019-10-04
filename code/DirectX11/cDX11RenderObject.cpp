@@ -51,8 +51,8 @@ void cDX11RenderObject::render(ID3D11DeviceContext* context, bool updateShader, 
 	if (updateRasterizer) {
 		context->RSSetState(mpRasterizerState);
 	}
-	IDX11Device->updateWolrdMatrix(context, &mWorldMatrix);
-	IDX11Device->updateMaterial(context, &mMaterial);
+//	IDX11Device->updateWolrdMatrix(context, &mWorldMatrix);
+//	IDX11Device->updateMaterial(context, &mMaterial);
 	if (*mTexture.get() && mTexture.isCubeMap()) {
 		context->PSSetShaderResources(1, 1, mTexture.getSRV());
 	} else {

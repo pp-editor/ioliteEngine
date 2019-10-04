@@ -3,6 +3,7 @@
 #include "tDX11ConstantBuffer.h"
 #include "cDX11Texture.h"
 #include "cDX11RenderObject.h"
+#include "cDX11RenderScene.h"
 
 //! @class 
 class cDX11Device : public aRenderDevice{
@@ -24,9 +25,6 @@ public:
 	ID3D11DeviceContext* getContext(){ return mpContext; }
 	bool isMultiSampling() { return mDepthStencilSampleCount > 0; }
 	DXGI_FORMAT getDepthStencilFormat(){ return mDepthStencilFormat; }
-	void updateWolrdMatrix(ID3D11DeviceContext* context, const WorldMatrix* world);
-	void updateMaterial   (ID3D11DeviceContext* context, const Material* material);
-	void updateConstantBuffer();
 
 //! -------------------------------------------------------------------------------------
 //! called by InnerFunction
@@ -51,6 +49,7 @@ public:
 	ID3D11Buffer*          createConstantBuffer   (size_t size, UINT num);
 	ID3D11RasterizerState* createRasterizerState  (D3D11_CULL_MODE cull = D3D11_CULL_BACK, D3D11_FILL_MODE fill = D3D11_FILL_SOLID);
 	void                   setViewport            (ID3D11DeviceContext* pContext, UINT width, UINT height);
+	ID3D11Texture2D*       getBackBuffer          ();
 
 //! -------------------------------------------------------------------------------------
 //! Member Variables
@@ -63,43 +62,8 @@ private:
 	ID3D11Device*             mpDevice;
 	IDXGISwapChain*           mpSwapchain;
 	ID3D11DeviceContext*      mpContext;
-	cDX11Texture              mBackBuffer;
-	cDX11Texture              mDepthStencil;
-	ID3D11BlendState*         mpBlendState;
 
-	//! shadowmap
-	cDX11Texture              mpShadowMapDepth;
-	ID3D11RasterizerState*    mpShadowRasterizer;
-
-	//! cbufffer resource
-	ID3D11Buffer*             mpConstant_Perspective;
-	ID3D11Buffer*             mpConstant_PerspectiveLight;
-	ID3D11Buffer*             mpConstant_WorldMatrix;
-	ID3D11Buffer*             mpConstant_Material;
-	ID3D11Buffer*             mpConstant_LightProperty;
-	ID3D11Buffer*             mpConstant_AmbientLight;
-	ID3D11Buffer*             mpConstant_DirectionLight;
-	ID3D11Buffer*             mpConstant_PointLight;
-
-	//! cbuffer value
-	PerspectiveViewMatrix     mPerspective;
-	PerspectiveViewMatrix     mPerspectiveLight;
-	LightProperty             mLightProperty;
-	AmbientLight              mAmbientLight;
-	DirectionalLight          mDirectionLight;
-	PointLight                mPointLight;
-
-	//! layout
-	ID3D11VertexShader*       mpVSShader;
-	ID3D11GeometryShader*     mpGSShader;
-	ID3D11PixelShader*        mpPSShader;
-	ID3D11PixelShader*        mpPSShaderNoTexture;
-	ID3D11PixelShader*        mpPSShaderCube;
-	ID3D11VertexShader*       mpVSShaderDepth;
-	ID3D11InputLayout*        mpInputLayout;
-
-	//! objects
-	std::list<cDX11RenderObject*> mpRenderObjectList;
+	cDX11RenderScene*         mpRenderScene;
 };
 
 //! accessor
