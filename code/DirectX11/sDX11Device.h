@@ -38,18 +38,18 @@ private:
 public:
 	enum eShaderType    { vs, gs, ps, layout };
 	enum eBufferType    { vertex, index, constant };
-	ID3DBlob*              createShaderBlob       (eShaderType type, const std::string& filename, const std::string& entrypoint);
-	ID3D11VertexShader*    createVSShader         (const std::string& filename, const std::string& entrypoint);
-	ID3D11PixelShader*     createPSShader         (const std::string& filename, const std::string& entrypoint);
-	ID3D11GeometryShader*  createGSShader         (const std::string& filename, const std::string& entrypoint);
-	ID3D11InputLayout*     createInputLayout      (D3D11_INPUT_ELEMENT_DESC* layout, UINT num, const std::string& filename, const std::string& entrypoint);
-	ID3D11Buffer*          createBuffer           (eBufferType type, void* data, UINT type_size, UINT num);
-	ID3D11Buffer*          createVertexBuffer     (Vertex* data, UINT num);
-	ID3D11Buffer*          createIndexBuffer      (UINT* data, UINT num);
-	ID3D11Buffer*          createConstantBuffer   (size_t size, UINT num);
-	ID3D11RasterizerState* createRasterizerState  (D3D11_CULL_MODE cull = D3D11_CULL_BACK, D3D11_FILL_MODE fill = D3D11_FILL_SOLID);
-	void                   setViewport            (ID3D11DeviceContext* pContext, UINT width, UINT height);
-	ID3D11Texture2D*       getBackBuffer          ();
+	ID3DBlob*              createShaderBlob      (eShaderType type, const std::string& filename, const std::string& entrypoint);
+	ID3D11VertexShader*    createVShader         (const std::string& filename, const std::string& entrypoint);
+	ID3D11PixelShader*     createPShader         (const std::string& filename, const std::string& entrypoint);
+	ID3D11GeometryShader*  createGShader         (const std::string& filename, const std::string& entrypoint);
+	ID3D11InputLayout*     createInputLayout     (D3D11_INPUT_ELEMENT_DESC* layout, UINT num, const std::string& filename, const std::string& entrypoint);
+	ID3D11Buffer*          createBuffer          (eBufferType type, void* data, UINT type_size, UINT num);
+	ID3D11Buffer*          createVertexBuffer    (nCBStruct::Vertex* data, UINT num);
+	ID3D11Buffer*          createIndexBuffer     (UINT* data, UINT num);
+	ID3D11Buffer*          createConstantBuffer  (size_t size, UINT num);
+	ID3D11RasterizerState* createRasterizerState (D3D11_CULL_MODE cull = D3D11_CULL_BACK, D3D11_FILL_MODE fill = D3D11_FILL_SOLID);
+	void                   setViewport           (ID3D11DeviceContext* pContext, UINT width, UINT height);
+	ID3D11Texture2D*       getBackBuffer         ();
 
 //! -------------------------------------------------------------------------------------
 //! Member Variables

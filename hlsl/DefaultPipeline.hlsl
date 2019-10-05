@@ -31,6 +31,9 @@ cbuffer CBPointLight     : register(b7) {
 	float4 PLight_specular;
 	float4 PLight_shininess;
 }
+cbuffer CBScreenFrame    : register(b8) {
+	matrix Proj2D;
+}
 
 Texture2D              Texture       : register(t0);
 TextureCube            CubeTex       : register(t1);
@@ -153,4 +156,29 @@ GSPSInput vsMainDepth(VSInput input) {
 	float4 ProjPos   = mul(LightProj,  ViewPos);
 	output.Position  = ProjPos;
 	return output;
+}
+/*
+struct VSInput2D {
+	float2 Position : POSITION;
+	float4 Color    : COLOR;
+	float2 TexCoord : TEXCOORD;
+};
+*/
+struct PSInput2D {
+	float4 Position     : SV_POSITION;
+	float4 Color        : COLOR;
+	float2 TexCoord     : TEXCOORD;
+};
+
+PSInput2D vsMain2D(VSInput input) {
+	PSInput2D output = (PSInput2D)0;
+	output.Position  = mul(World,  float4(input.Position.xyz, 1.0f));
+	output.Position  = mul(Proj2D, output.Position);
+	output.Color     = input.Color;
+	output.TexCoord  = input.TexCoord;
+	return output;
+}
+
+void psMain2D(in PSInput2D input, out float4 output : SV_TARGET0) {
+	output = Texture.Sample(Sampler, input.TexCoord) * input.Color;
 }

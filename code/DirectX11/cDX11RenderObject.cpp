@@ -1,5 +1,6 @@
 ﻿#include "sDX11Device.h"
 #include "cDX11RenderObject.h"
+#include "Utility/nModelLoader.h"
 
 //! @brief コンストラクタ
 cDX11RenderObject::cDX11RenderObject():
@@ -11,6 +12,7 @@ cDX11RenderObject::cDX11RenderObject():
 	,mpRasterizerState          (nullptr)
 	,mPrimitiveTopology         (D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
 	,mShadowCasting             (true)
+	,mHasTextureOwnerShip       (true)
 	,mpRef_VSShader             (nullptr)
 	,mpRef_GSShader             (nullptr)
 	,mpRef_PSShader             (nullptr)
@@ -25,7 +27,11 @@ cDX11RenderObject::~cDX11RenderObject() {
 //! @brief 生成済みリソースの初期化
 void cDX11RenderObject::Release() {
 	SAFE_RELEASE(mpRasterizerState);
-	mTexture.Release();
+	if (mHasTextureOwnerShip) {
+		mTexture.Release();
+	} else {
+		mTexture = {};
+	}
 	SAFE_RELEASE(mpIndexBuffer);
 	SAFE_RELEASE(mpVertexBuffer);
 
@@ -42,7 +48,7 @@ void cDX11RenderObject::render(ID3D11DeviceContext* context, bool updateShader, 
 		context->PSSetShader(mpRef_PSShader ? *mpRef_PSShader : nullptr, nullptr, 0);
 	}
 
-	UINT stride = sizeof(Vertex);
+	UINT stride = sizeof(nCBStruct::Vertex);
 	UINT offset = 0;
 	context->IASetInputLayout(*mpRef_InputLayout);
 	context->IASetPrimitiveTopology(mPrimitiveTopology);
@@ -51,8 +57,6 @@ void cDX11RenderObject::render(ID3D11DeviceContext* context, bool updateShader, 
 	if (updateRasterizer) {
 		context->RSSetState(mpRasterizerState);
 	}
-//	IDX11Device->updateWolrdMatrix(context, &mWorldMatrix);
-//	IDX11Device->updateMaterial(context, &mMaterial);
 	if (*mTexture.get() && mTexture.isCubeMap()) {
 		context->PSSetShaderResources(1, 1, mTexture.getSRV());
 	} else {
@@ -66,11 +70,11 @@ void cDX11RenderObject::updateWorldMatrix(DirectX::XMMATRIX matrix) {
 	mWorldMatrix.world = matrix;
 }
 //! @brief マテリアルを更新
-void cDX11RenderObject::updateMaterial(Material material) {
+void cDX11RenderObject::updateMaterial(nCBStruct::Material material) {
 	mMaterial = material;
 }
 //! @brief 頂点バッファを作成
-void cDX11RenderObject::createVertexBuffer(Vertex* data, UINT num) {
+void cDX11RenderObject::createVertexBuffer(nCBStruct::Vertex* data, UINT num) {
 	mpVertexBuffer = IDX11Device->createVertexBuffer(data, num);
 }
 //! @brief インデックスバッファを作成
@@ -78,14 +82,38 @@ void cDX11RenderObject::createIndexBuffer(UINT* data, UINT num) {
 	mpIndexBuffer = IDX11Device->createIndexBuffer(data, num);
 	mIndicesNum   = num;
 }
+//! @brief モデルデータのロード
+void cDX11RenderObject::loadModel(const std::string& filename) {
+	std::vector<nCBStruct::Vertex> vertices;
+	std::vector<UINT>   indices;
+	if (strstr(filename.c_str(), ".obj") != NULL) {
+		nModelLoader::loadObj(filename, vertices, indices);
+	} else {
+		throw std::runtime_error("error: cDX11RenderObject::loadModel(not supported format)");
+	}
+	createVertexBuffer(vertices.data(), (UINT)vertices.size());
+	createIndexBuffer(indices.data(), (UINT)indices.size());
+}
+//! @brief 図形モデルのロード
+void cDX11RenderObject::loadFigure(nFigureData::FigureFunc func) {
+	nCBStruct::Vertex* vertices = nullptr;
+	UINT vNum = 0, iNum = 0, *indices = nullptr;
+	func(vertices, vNum, indices, iNum);
+	createVertexBuffer(vertices, vNum);
+	createIndexBuffer(indices, iNum);
+}
 //! @brief テクスチャの作成
 void cDX11RenderObject::createTexture(const std::string& filename) {
 	mTexture.createTexture(filename);
+	mHasTextureOwnerShip = true;
 }
 //! @brief テクスチャのセット
-void cDX11RenderObject::setTexture(const cDX11Texture& texture) {
-	mTexture.Release();
+void cDX11RenderObject::setTexture(const cDX11Texture& texture, bool isPassTextureOwnership) {
+	if (mHasTextureOwnerShip) {
+		mTexture.Release();
+	}
 	mTexture = texture;
+	mHasTextureOwnerShip = isPassTextureOwnership;
 }
 //! @brief ラスタライザステートの作成
 void cDX11RenderObject::createRasterizerState(D3D11_CULL_MODE cull, D3D11_FILL_MODE fill) {

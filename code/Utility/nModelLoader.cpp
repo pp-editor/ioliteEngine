@@ -3,7 +3,7 @@
 #include "nModelLoader.h"
 
 namespace nModelLoader {
-	void loadObj(std::string filename, std::vector<Vertex>& vertices, std::vector<UINT>& indices) {
+	void loadObj(std::string filename, std::vector<nCBStruct::Vertex>& vertices, std::vector<UINT>& indices) {
 		std::ifstream ifs;
 		ifs.open(filename, std::ios::in);
 
@@ -23,7 +23,7 @@ namespace nModelLoader {
 			switch (mode) {
 			case eMode::v:
 				{
-					Vertex vt = {};
+					nCBStruct::Vertex vt = {};
 					float x, y, z;
 					sscanf_s(line.c_str(), "v %f %f %f", &x, &y, &z);
 					vt.position = { x, y, z, 1.0f };

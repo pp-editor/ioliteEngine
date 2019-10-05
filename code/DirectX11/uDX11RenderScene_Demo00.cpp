@@ -24,6 +24,7 @@ uDX11RenderScene_Demo00::~uDX11RenderScene_Demo00() {
 //! @brief 
 void uDX11RenderScene_Demo00::Release() {
 	//! constant buffer
+	SAFE_RELEASE(mpConstant_ScreenProj);
 	SAFE_RELEASE(mpConstant_PointLight);
 	SAFE_RELEASE(mpConstant_DirectionLight);
 	SAFE_RELEASE(mpConstant_AmbientLight);
@@ -34,13 +35,16 @@ void uDX11RenderScene_Demo00::Release() {
 	SAFE_RELEASE(mpConstant_Perspective);
 
 	//! shader resource
+	SAFE_RELEASE(mpInputLayout2D);
+	SAFE_RELEASE(mpPShader2D);
+	SAFE_RELEASE(mpVShader2D);
 	SAFE_RELEASE(mpInputLayout);
-	SAFE_RELEASE(mpVSShaderDepth);
-	SAFE_RELEASE(mpPSShaderCube);
-	SAFE_RELEASE(mpPSShaderNoTexture);
-	SAFE_RELEASE(mpPSShader);
-	SAFE_RELEASE(mpGSShader);
-	SAFE_RELEASE(mpVSShader);
+	SAFE_RELEASE(mpVShaderDepth);
+	SAFE_RELEASE(mpPShaderCube);
+	SAFE_RELEASE(mpPShaderNoTexture);
+	SAFE_RELEASE(mpPShader);
+	SAFE_RELEASE(mpGShader);
+	SAFE_RELEASE(mpVShader);
 
 	//! objects
 	for (auto it = mpRenderObjectList.begin(); it != mpRenderObjectList.end(); it++) {
@@ -49,10 +53,18 @@ void uDX11RenderScene_Demo00::Release() {
 		*it = nullptr;
 	}
 	mpRenderObjectList.clear();
+	for (auto it = mpRenderObject2DList.begin(); it != mpRenderObject2DList.end(); it++) {
+		(*it)->Release();
+		delete *it;
+		*it = nullptr;
+	}
+	mpRenderObject2DList.clear();
 
 	//! unique resource
 	SAFE_RELEASE(mpShadowRasterizer);
 	SAFE_RELEASE(mpBlendState);
+	m2DOverlayRender.Release();
+	m2DOverlay.Release();
 	mpShadowMapDepth.Release();
 	mDepthStencil.Release();
 	mBackBuffer.Release();
@@ -99,15 +111,19 @@ void uDX11RenderScene_Demo00::init() {
 	//! create shadow-map rasterizer
 	mpShadowRasterizer = IDX11Device->createRasterizerState(D3D11_CULL_FRONT);
 
-	//! create shader
-	mpVSShader          = IDX11Device->createVSShader(nFile::getResourcePath("hlsl/DefaultPipeline.hlsl"), "vsMain");
-	mpGSShader          = IDX11Device->createGSShader(nFile::getResourcePath("hlsl/DefaultPipeline.hlsl"), "gsMain");
-	mpPSShader          = IDX11Device->createPSShader(nFile::getResourcePath("hlsl/DefaultPipeline.hlsl"), "psMain");
-	mpPSShaderNoTexture = IDX11Device->createPSShader(nFile::getResourcePath("hlsl/DefaultPipeline.hlsl"), "psMainNoTexture");
-	mpPSShaderCube      = IDX11Device->createPSShader(nFile::getResourcePath("hlsl/DefaultPipeline.hlsl"), "psMainCube");
-	mpVSShaderDepth     = IDX11Device->createVSShader(nFile::getResourcePath("hlsl/DefaultPipeline.hlsl"), "vsMainDepth");
+	//! create 2D overlay
+	m2DOverlay.createTexture(width, height, cDX11Texture::eTexDescType::Render);
+	m2DOverlay.createRenderTargetView();
+	m2DOverlay.createShaderResourceView();
+	m2DOverlay.createSamplerState();
 
-	//! create inputLayout
+	//! create shader3D
+	mpVShader          = IDX11Device->createVShader(nFile::getResourcePath("hlsl/DefaultPipeline.hlsl"), "vsMain");
+	mpGShader          = IDX11Device->createGShader(nFile::getResourcePath("hlsl/DefaultPipeline.hlsl"), "gsMain");
+	mpPShader          = IDX11Device->createPShader(nFile::getResourcePath("hlsl/DefaultPipeline.hlsl"), "psMain");
+	mpPShaderNoTexture = IDX11Device->createPShader(nFile::getResourcePath("hlsl/DefaultPipeline.hlsl"), "psMainNoTexture");
+	mpPShaderCube      = IDX11Device->createPShader(nFile::getResourcePath("hlsl/DefaultPipeline.hlsl"), "psMainCube");
+	mpVShaderDepth     = IDX11Device->createVShader(nFile::getResourcePath("hlsl/DefaultPipeline.hlsl"), "vsMainDepth");
 	D3D11_INPUT_ELEMENT_DESC layout[] = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "NORMAL"  , 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -116,15 +132,28 @@ void uDX11RenderScene_Demo00::init() {
 	};
 	mpInputLayout = IDX11Device->createInputLayout(layout, _countof(layout), nFile::getResourcePath("hlsl/DefaultPipeline.hlsl"), "vsMain");
 
+	//! create shadrer2D
+	mpVShader2D       = IDX11Device->createVShader(nFile::getResourcePath("hlsl/DefaultPipeline.hlsl"), "vsMain2D");
+	mpPShader2D       = IDX11Device->createPShader(nFile::getResourcePath("hlsl/DefaultPipeline.hlsl"), "psMain2D");
+/*
+	D3D11_INPUT_ELEMENT_DESC layout2D[] = {
+		{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "COLOR"   , 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	};
+*/
+	mpInputLayout2D = IDX11Device->createInputLayout(layout, _countof(layout), nFile::getResourcePath("hlsl/DefaultPipeline.hlsl"), "vsMain2D");
+
 	//! create PerspectiveView(ConstantBuffer)
-	mpConstant_Perspective      = IDX11Device->createConstantBuffer(sizeof(PerspectiveViewMatrix), 1);
-	mpConstant_PerspectiveLight = IDX11Device->createConstantBuffer(sizeof(PerspectiveViewMatrix), 1);
-	mpConstant_WorldMatrix      = IDX11Device->createConstantBuffer(sizeof(WorldMatrix),           1);
-	mpConstant_LightProperty    = IDX11Device->createConstantBuffer(sizeof(LightProperty),         1);
-	mpConstant_Material         = IDX11Device->createConstantBuffer(sizeof(Material),              1);
-	mpConstant_AmbientLight     = IDX11Device->createConstantBuffer(sizeof(AmbientLight),          1);
-	mpConstant_DirectionLight   = IDX11Device->createConstantBuffer(sizeof(DirectionalLight),      1);
-	mpConstant_PointLight       = IDX11Device->createConstantBuffer(sizeof(PointLight),            1);
+	mpConstant_Perspective      = IDX11Device->createConstantBuffer(sizeof(nCBStruct::PerspectiveViewMatrix), 1);
+	mpConstant_PerspectiveLight = IDX11Device->createConstantBuffer(sizeof(nCBStruct::PerspectiveViewMatrix), 1);
+	mpConstant_WorldMatrix      = IDX11Device->createConstantBuffer(sizeof(nCBStruct::WorldMatrix),           1);
+	mpConstant_LightProperty    = IDX11Device->createConstantBuffer(sizeof(nCBStruct::LightProperty),         1);
+	mpConstant_Material         = IDX11Device->createConstantBuffer(sizeof(nCBStruct::Material),              1);
+	mpConstant_AmbientLight     = IDX11Device->createConstantBuffer(sizeof(nCBStruct::AmbientLight),          1);
+	mpConstant_DirectionLight   = IDX11Device->createConstantBuffer(sizeof(nCBStruct::DirectionalLight),      1);
+	mpConstant_PointLight       = IDX11Device->createConstantBuffer(sizeof(nCBStruct::PointLight),            1);
+	mpConstant_ScreenProj       = IDX11Device->createConstantBuffer(sizeof(nCBStruct::ScreenProj),            1);
 
 	DirectX::XMVECTOR camPos = DirectX::XMVectorSet(2.0f, 2.0f, -2.0f, 1.0f);
 	DirectX::XMVECTOR camTar = DirectX::XMVectorSet(0.0f, 0.0f,  0.0f, 1.0f);
@@ -151,8 +180,15 @@ void uDX11RenderScene_Demo00::init() {
 	mAmbientLight.color     = { 0.2f, 0.2f, 0.2f, 1.0f };
 	mDirectionLight.color   = { 0.4f, 0.4f, 0.4f, 1.0f };
 
+	//! create 2d overlay projection
+	mScreenProj.proj = {
+		 2.f / width,  0.f,          0.f, 0.f,
+		 0.f,         -2.f / height, 0.f, 0.f,
+		 0.f,          0.f,          1.f, 0.f,
+		-1.f,          1.f,          0.f, 1.f,
+	};
 
-		//! write clear-color Texture
+	//! write clear-color Texture
 	cDX11Texture dynamicTex;
 	dynamicTex.createTexture(128, 128, cDX11Texture::eTexDescType::CPUdynamic);
 	{
@@ -230,73 +266,60 @@ void uDX11RenderScene_Demo00::init() {
 	}
 	dynamicCube.createShaderResourceView();
 	dynamicCube.createSamplerState();
-
-	enum class eFigureType : int { Cube, WiredCube, Quad };
-	auto loadCube = [](cDX11RenderObject* target, eFigureType type) {
-		Vertex* vertices          = nullptr;
-		UINT vNum, iNum, *indices = nullptr;
-		switch (type) {
-		case eFigureType::Cube:      nFigureData::getCube(vertices, vNum, indices, iNum);      break;
-		case eFigureType::WiredCube: nFigureData::getWiredCube(vertices, vNum, indices, iNum); break;
-		case eFigureType::Quad:      nFigureData::getQuad(vertices, vNum, indices, iNum);	   break;
-		}
-		target->createVertexBuffer(vertices, vNum);
-		target->createIndexBuffer(indices, iNum);
-	};
-	auto loadBunny = [](cDX11RenderObject* target) {
-		std::vector<Vertex> vertices;
-		std::vector<UINT>   indices;
-		nModelLoader::loadObj(nFile::getResourcePath("resource/mesh/bunny.obj"), vertices, indices);
-		target->createVertexBuffer(vertices.data(), (UINT)vertices.size());
-		target->createIndexBuffer(indices.data(), (UINT)indices.size());
-	};
-
+	
 	//! create renderObject
 	for (int i = 0; i < 8; i++) {
 		cDX11RenderObject* pObj = new cDX11RenderObject();
-		pObj->attach(&mpVSShader, nullptr, &mpPSShader, &mpInputLayout);
+		pObj->attach(&mpVShader, nullptr, &mpPShader, &mpInputLayout);
 		switch(i){
 		case 7:	//!< alpha cube
-			loadCube(pObj, eFigureType::Cube);
-			pObj->setTexture(dynamicTex);
+			pObj->loadFigure(nFigureData::getCube);
+			pObj->setTexture(dynamicTex, true);
 			pObj->createRasterizerState(D3D11_CULL_NONE);
 			pObj->setShadowCasting(false);
 			break;
 		case 6: //!< cube-mapping
-			loadCube(pObj, eFigureType::Cube);
-			pObj->setTexture(dynamicCube);
-			pObj->attach(&mpPSShaderCube);
+			pObj->loadFigure(nFigureData::getCube);
+			pObj->setTexture(dynamicCube, true);
+			pObj->attach(&mpPShaderCube);
 			break;
 		case 5: //!< wireframe cube
-			loadCube(pObj, eFigureType::Cube);
+			pObj->loadFigure(nFigureData::getCube);
 			pObj->createRasterizerState(D3D11_CULL_NONE, D3D11_FILL_WIREFRAME);
-			pObj->attach(&mpPSShaderNoTexture);
+			pObj->attach(&mpPShaderNoTexture);
 			pObj->setShadowCasting(false);
 			break;
 		case 4: //!< stanford bunny
-			loadBunny(pObj);
-			pObj->attach(&mpPSShaderNoTexture);
+			pObj->loadModel(nFile::getResourcePath("resource/mesh/bunny.obj"));
+			pObj->attach(&mpPShaderNoTexture);
 			break;
 		case 3: //!< built with line list cube
-			loadCube(pObj, eFigureType::WiredCube);
-			pObj->attach(&mpPSShaderNoTexture);
+			pObj->loadFigure(nFigureData::getWiredCube);
+			pObj->attach(&mpPShaderNoTexture);
 			pObj->setShadowCasting(false);
 			pObj->setPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 			break;
 		default:
-			loadCube(pObj, eFigureType::Cube);
+			pObj->loadFigure(nFigureData::getCube);
 			pObj->createTexture(nFile::getResourcePath("resource/texture/mono.png"));
 			pObj->createSamplerState();
 		}
 		DirectX::XMMATRIX matrix = DirectX::XMMatrixIdentity();
 		pObj->updateWorldMatrix(matrix);
-		Material material;
+		nCBStruct::Material material;
 		material.ambient  = { 1.0f, 1.0f, 1.0f, 0.0f };
 		material.diffuse  = { 1.0f, 1.0f, 1.0f, 0.0f };
 		material.specular = { 1.0f, 1.0f, 1.0f,20.0f };
 		pObj->updateMaterial(material);
 		mpRenderObjectList.push_back(pObj);
 	}
+
+	//! create 2D render object
+	float w = (float)width, h = (float)height;
+	m2DOverlayRender.attach(&mpVShader2D, nullptr, &mpPShader2D, &mpInputLayout2D);
+	m2DOverlayRender.setTexture(m2DOverlay, false);
+	m2DOverlayRender.loadFigure(nFigureData::getRectangle);
+	m2DOverlayRender.updateWorldMatrix(DirectX::XMMatrixIdentity() * DirectX::XMMatrixScaling(w, h, 1.f));
 }
 //! @brief 
 void uDX11RenderScene_Demo00::update() {
@@ -306,8 +329,8 @@ void uDX11RenderScene_Demo00::update() {
 	for (auto obj : mpRenderObjectList) {
 		if (i == 0) {
 			DirectX::XMMATRIX matrix = DirectX::XMMatrixIdentity();
-			matrix *= DirectX::XMMatrixScaling(10.f, 0.3f, 10.f);
-			matrix *= DirectX::XMMatrixTranslation(0.f, -1.f, 0.f);
+			matrix *= DirectX::XMMatrixScaling(5.f, 0.15f, 5.f);
+			matrix *= DirectX::XMMatrixTranslation(0.f, -0.925f, 0.f);
 			obj->updateWorldMatrix(matrix);
 		}
 		else {
@@ -321,6 +344,8 @@ void uDX11RenderScene_Demo00::update() {
 				matrix *= DirectX::XMMatrixRotationY(theta + rotate);
 				matrix *= DirectX::XMMatrixTranslation(sinf(theta)*radius, -1.f, cosf(theta)*radius);
 			} else {
+				float size = 0.5f;
+				matrix *= DirectX::XMMatrixScaling(size, size, size);
 				matrix *= DirectX::XMMatrixRotationY(theta + rotate);
 				matrix *= DirectX::XMMatrixTranslation(sinf(theta)*radius, 0.0f, cosf(theta)*radius);
 			}
@@ -332,8 +357,13 @@ void uDX11RenderScene_Demo00::update() {
 }
 //! @brief 
 void uDX11RenderScene_Demo00::render(ID3D11DeviceContext* context) {
+	//! property
 	float depthClearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	float backGroundColor[] = { 0.0f, 0.125f, 0.6f, 1.0f };
+	float overlay2DColor[]  = { 0.0f, 0.0f, 0.0f, 0.0f };
+	ID3D11ShaderResourceView *const pEmptySRV[1] = { NULL };
+	ID3D11RenderTargetView   *const pEmptyRTV[1] = { NULL };
+	ID3D11DepthStencilView   *const pEmptyDSV    = NULL;
 	context->ClearRenderTargetView(*mBackBuffer.getRTV(), backGroundColor);
 	context->ClearDepthStencilView(*mDepthStencil.getDSV(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
@@ -344,20 +374,21 @@ void uDX11RenderScene_Demo00::render(ID3D11DeviceContext* context) {
 	context->UpdateSubresource(mpConstant_AmbientLight,     0, NULL, &mAmbientLight,     0, 0);
 	context->UpdateSubresource(mpConstant_DirectionLight,   0, NULL, &mDirectionLight,   0, 0);
 	context->UpdateSubresource(mpConstant_PointLight,       0, NULL, &mPointLight,       0, 0);
-	context->VSSetConstantBuffers(eCBufferSlot::PERSPECTIVE,     1, &mpConstant_Perspective);
-	context->VSSetConstantBuffers(eCBufferSlot::LIGHT_PERSPECT,  1, &mpConstant_PerspectiveLight);
-	context->PSSetConstantBuffers(eCBufferSlot::LIGHT_PROPERTY,  1, &mpConstant_LightProperty);
-	context->PSSetConstantBuffers(eCBufferSlot::AMBIENT_LIGNT,   1, &mpConstant_AmbientLight);
-	context->PSSetConstantBuffers(eCBufferSlot::DIRECTION_LIGHT, 1, &mpConstant_DirectionLight);
-	context->PSSetConstantBuffers(eCBufferSlot::POINT_LIGHT,     1, &mpConstant_PointLight);
+	context->UpdateSubresource(mpConstant_ScreenProj,       0, NULL, &mScreenProj,       0, 0);
+	context->VSSetConstantBuffers(nCBSlot::PERSPECTIVE,     1, &mpConstant_Perspective);
+	context->VSSetConstantBuffers(nCBSlot::LIGHT_PERSPECT,  1, &mpConstant_PerspectiveLight);
+	context->PSSetConstantBuffers(nCBSlot::LIGHT_PROPERTY,  1, &mpConstant_LightProperty);
+	context->PSSetConstantBuffers(nCBSlot::AMBIENT_LIGNT,   1, &mpConstant_AmbientLight);
+	context->PSSetConstantBuffers(nCBSlot::DIRECTION_LIGHT, 1, &mpConstant_DirectionLight);
+	context->PSSetConstantBuffers(nCBSlot::POINT_LIGHT,     1, &mpConstant_PointLight);
+	context->VSSetConstantBuffers(nCBSlot::SCREEN_PROJ,     1, &mpConstant_ScreenProj);
 
-	//! set Blendstate
+	//! set Common States
 	float blendFactor[4] = {D3D11_BLEND_ZERO, D3D11_BLEND_ZERO, D3D11_BLEND_ZERO, D3D11_BLEND_ZERO };
 	context->OMSetBlendState(mpBlendState, blendFactor, 0xFFFFFFFF);
 
 	//! unbind resources
-	ID3D11ShaderResourceView *const pSRV[1] = { NULL };
-	context->PSSetShaderResources(2, 1, pSRV);
+	context->PSSetShaderResources(2, 1, pEmptySRV);
 
 	//! prepare viewportRect
 	UINT width, height, screenW, screenH;
@@ -366,11 +397,10 @@ void uDX11RenderScene_Demo00::render(ID3D11DeviceContext* context) {
 
 	//! pre-render depth
 	IDX11Device->setViewport(context, width, height);
-	context->VSSetShader(mpVSShaderDepth, nullptr, 0);
+	context->VSSetShader(mpVShaderDepth,  nullptr, 0);
 	context->GSSetShader(nullptr,         nullptr, 0);
 	context->PSSetShader(nullptr,         nullptr, 0);
-	ID3D11RenderTargetView *const pRTV[1] = { NULL };
-	context->OMSetRenderTargets(1, pRTV, *mpShadowMapDepth.getDSV());
+	context->OMSetRenderTargets(1, pEmptyRTV, *mpShadowMapDepth.getDSV());
 	context->ClearDepthStencilView(*mpShadowMapDepth.getDSV(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	for (auto obj : mpRenderObjectList) {
 		if (obj->isShadowCasting()) {
@@ -390,15 +420,33 @@ void uDX11RenderScene_Demo00::render(ID3D11DeviceContext* context) {
 		updateWolrdMatrix(context, obj->getWorldMatrix());
 		obj->render(context);
 	}
+
+	//! render2D
+	m2DOverlay.getTextureSize(width, height);
+	IDX11Device->setViewport(context, width, height);
+	context->VSSetShader(nullptr, nullptr, 0);
+	context->GSSetShader(nullptr, nullptr, 0);
+	context->PSSetShader(nullptr, nullptr, 0);
+	context->ClearRenderTargetView(*m2DOverlay.getRTV(), overlay2DColor);
+	context->OMSetRenderTargets(1, m2DOverlay.getRTV(), pEmptyDSV);
+	for (auto obj : mpRenderObject2DList) {
+		updateWolrdMatrix(context, obj->getWorldMatrix());
+		obj->render(context);
+	}
+
+	//! render2D output to backBuffer
+	context->OMSetRenderTargets(1, mBackBuffer.getRTV(), pEmptyDSV);
+	updateWolrdMatrix(context, m2DOverlayRender.getWorldMatrix());
+	m2DOverlayRender.render(context);
 }
 
 //! @brief 
-void uDX11RenderScene_Demo00::updateWolrdMatrix(ID3D11DeviceContext* context, const WorldMatrix* world) {
+void uDX11RenderScene_Demo00::updateWolrdMatrix(ID3D11DeviceContext* context, const nCBStruct::WorldMatrix* world) {
 	context->UpdateSubresource(mpConstant_WorldMatrix, 0, NULL, world, 0, 0);
-	context->VSSetConstantBuffers(eCBufferSlot::WORLD_MATRIX, 1, &mpConstant_WorldMatrix);
+	context->VSSetConstantBuffers(nCBSlot::WORLD_MATRIX, 1, &mpConstant_WorldMatrix);
 }
 //! @brief 
-void uDX11RenderScene_Demo00::updateMaterial(ID3D11DeviceContext* context, const Material* material) {
+void uDX11RenderScene_Demo00::updateMaterial(ID3D11DeviceContext* context, const nCBStruct::Material* material) {
 	context->UpdateSubresource(mpConstant_Material, 0, NULL, material, 0, 0);
-	context->PSSetConstantBuffers(eCBufferSlot::MATERIAL, 1, &mpConstant_Material);
+	context->PSSetConstantBuffers(nCBSlot::MATERIAL, 1, &mpConstant_Material);
 }

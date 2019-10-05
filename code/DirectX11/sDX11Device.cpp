@@ -171,7 +171,7 @@ ID3DBlob* cDX11Device::createShaderBlob(eShaderType type, const std::string& fil
 	return pBlob;
 }
 //! @brief 
-ID3D11VertexShader* cDX11Device::createVSShader(const std::string& filename, const std::string& entrypoint) {
+ID3D11VertexShader* cDX11Device::createVShader(const std::string& filename, const std::string& entrypoint) {
 	auto pBlob = createShaderBlob(eShaderType::vs, filename, entrypoint);
 	ID3D11VertexShader* shader;
 	if (FAILED(mpDevice->CreateVertexShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), NULL, &shader))) {
@@ -181,7 +181,7 @@ ID3D11VertexShader* cDX11Device::createVSShader(const std::string& filename, con
 	return shader;
 }
 //! @brief 
-ID3D11PixelShader* cDX11Device::createPSShader(const std::string& filename, const std::string& entrypoint) {
+ID3D11PixelShader* cDX11Device::createPShader(const std::string& filename, const std::string& entrypoint) {
 	auto pBlob = createShaderBlob(eShaderType::ps, filename, entrypoint);
 	ID3D11PixelShader* shader;
 	if (FAILED(mpDevice->CreatePixelShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), NULL, &shader))) {
@@ -191,7 +191,7 @@ ID3D11PixelShader* cDX11Device::createPSShader(const std::string& filename, cons
 	return shader;
 }
 //! @brief 
-ID3D11GeometryShader* cDX11Device::createGSShader(const std::string& filename, const std::string& entrypoint) {
+ID3D11GeometryShader* cDX11Device::createGShader(const std::string& filename, const std::string& entrypoint) {
 	auto pBlob = createShaderBlob(eShaderType::gs, filename, entrypoint);
 	ID3D11GeometryShader* shader;
 	if (FAILED(mpDevice->CreateGeometryShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), NULL, &shader))) {
@@ -235,8 +235,8 @@ ID3D11Buffer* cDX11Device::createBuffer(eBufferType type, void* data, UINT type_
 	return buffer;
 }
 //! @brief 
-ID3D11Buffer* cDX11Device::createVertexBuffer(Vertex* data, UINT num) {
-	return createBuffer(eBufferType::vertex, data, sizeof(Vertex), num);
+ID3D11Buffer* cDX11Device::createVertexBuffer(nCBStruct::Vertex* data, UINT num) {
+	return createBuffer(eBufferType::vertex, data, sizeof(nCBStruct::Vertex), num);
 }
 //! @brief 
 ID3D11Buffer* cDX11Device::createIndexBuffer(UINT* data, UINT num) {
