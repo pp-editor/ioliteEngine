@@ -13,6 +13,8 @@ public:
 	void closeRequest();
 	HWND getHandle();
 	void getClientRect(UINT& width, UINT& height);
+	bool isActive(){ return mIsActive; }
+	bool isMouseInnerClient(){ return mIsMouseInnerClient; }
 
 private:
 	const char*  mTitle;
@@ -20,6 +22,8 @@ private:
 	u32          mHeight;
 	HWND         mHandle;
 	bool         mIsClose;
+	bool         mIsActive;
+	bool         mIsMouseInnerClient;
 };
 
 //! accessor

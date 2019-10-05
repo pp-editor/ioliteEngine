@@ -1,5 +1,7 @@
 ﻿#pragma once
 #pragma comment(lib, "DirectXTex.lib")
+#pragma comment(lib, "dinput8.lib")
+#pragma comment(lib, "dxguid.lib")
 
 #include <windows.h>
 
@@ -17,6 +19,9 @@
 #include <DirectXTex/DirectXTex.h>
 #include <DDSTextureLoader/DDSTextureLoader.h>
 #include <WICTextureLoader/WICTextureLoader.h>
+
+#define DIRECTINPUT_VERSION 0x0800
+#include <dinput.h>
 
 #include <iostream>
 #include <string>

@@ -1,5 +1,6 @@
 ﻿#include "cDX11RenderScene.h"
 #include "cDX11RenderObject.h"
+#include "Utility/cCamera3D.h"
 
 class uDX11RenderScene_Demo00 : public cDX11RenderScene {
 
@@ -68,4 +69,7 @@ private:
 	//! render objects
 	std::list<cDX11RenderObject*> mpRenderObjectList;
 	std::list<cDX11RenderObject*> mpRenderObject2DList;
+
+	//! camera Object
+	cCamera3D                 mCamera3D;
 };

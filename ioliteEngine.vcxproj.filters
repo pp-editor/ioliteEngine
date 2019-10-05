@@ -88,6 +88,15 @@
     <ClCompile Include="code\DirectX11\uDX11RenderScene_Demo00.cpp">
       <Filter>SourceFiles\DirectX11</Filter>
     </ClCompile>
+    <ClCompile Include="code\Application\sMouse.cpp">
+      <Filter>SourceFiles\Application</Filter>
+    </ClCompile>
+    <ClCompile Include="code\Utility\cCamera3D.cpp">
+      <Filter>SourceFiles\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="code\Application\sKeyboard.cpp">
+      <Filter>SourceFiles\Application</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="code\main.h">
@@ -149,6 +158,15 @@
     </ClInclude>
     <ClInclude Include="code\DirectX11\uDX11RenderScene_Demo00.h">
       <Filter>SourceFiles\DirectX11</Filter>
+    </ClInclude>
+    <ClInclude Include="code\Application\sMouse.h">
+      <Filter>SourceFiles\Application</Filter>
+    </ClInclude>
+    <ClInclude Include="code\Utility\cCamera3D.h">
+      <Filter>SourceFiles\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="code\Application\sKeyboard.h">
+      <Filter>SourceFiles\Application</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

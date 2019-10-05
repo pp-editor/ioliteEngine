@@ -4,7 +4,7 @@
 SINGLETON_INSTANCE(sWindow);
 
 //! @brief コンストラクタ
-sWindow::sWindow() : mTitle(""), mWidth(800), mHeight(600), mHandle(), mIsClose(false){
+sWindow::sWindow() : mTitle(""), mWidth(800), mHeight(600), mHandle(), mIsClose(false), mIsActive(true), mIsMouseInnerClient(true){
 
 }
 //! @brief デストラクタ
@@ -32,6 +32,19 @@ LRESULT CALLBACK sWindow::ClassWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARA
 	switch (msg) {
 	case WM_CLOSE:
 		DestroyWindow(hWnd);
+		break;
+	case WM_ACTIVATE:
+		switch (wParam) {
+		case WA_INACTIVE:    mIsActive = false; break;
+		case WA_ACTIVE:      mIsActive = true;  break;
+		case WA_CLICKACTIVE: mIsActive = true;  break;
+		}
+		break;
+	case WM_NCMOUSEMOVE:
+		mIsMouseInnerClient = false;
+		break;
+	case WM_MOUSEMOVE:
+		mIsMouseInnerClient = true;
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);

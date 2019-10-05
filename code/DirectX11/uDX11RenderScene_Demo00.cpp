@@ -1,5 +1,7 @@
-﻿#include "Application/sTime.h"
-#include "Application/sWindow.h"
+﻿#include "Application/sWindow.h"
+#include "Application/sTime.h"
+#include "Application/sMouse.h"
+#include "Application/sKeyboard.h"
 #include "DirectX11/sDX11Device.h"
 #include "DirectX11/nFigureData.h"
 #include "Utility/nFile.h"
@@ -155,13 +157,14 @@ void uDX11RenderScene_Demo00::init() {
 	mpConstant_PointLight       = IDX11Device->createConstantBuffer(sizeof(nCBStruct::PointLight),            1);
 	mpConstant_ScreenProj       = IDX11Device->createConstantBuffer(sizeof(nCBStruct::ScreenProj),            1);
 
-	DirectX::XMVECTOR camPos = DirectX::XMVectorSet(2.0f, 2.0f, -2.0f, 1.0f);
-	DirectX::XMVECTOR camTar = DirectX::XMVectorSet(0.0f, 0.0f,  0.0f, 1.0f);
-	DirectX::XMVECTOR camUp  = DirectX::XMVectorSet(0.0f, 1.0f,  0.0f, 1.0f);
+	//! set Camera Property
+	IMouse->setSensitivily(0.01f);
+	mCamera3D.init();
+	mCamera3D.setPos(2.f, 2.f, -2.f);
+	mCamera3D.makeLookAtViewLH(mPerspective.view);
+	memcpy(&mLightProperty.eyePosition, mCamera3D.getPos().m128_f32, sizeof(mLightProperty.eyePosition));
 	FLOAT aspectRatio = (FLOAT)width / height;
-	mPerspective.view = DirectX::XMMatrixLookAtLH(camPos, camTar, camUp);
-	mPerspective.proj = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV2, aspectRatio, 1.f, 200.0f);
-	memcpy(&mLightProperty.eyePosition, camPos.m128_f32, sizeof(mLightProperty.eyePosition));
+	mPerspective.proj = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV2, aspectRatio, 0.1f, 200.0f);
 
 	//! create Directional Light
 	mDirectionLight.position = { 5.0f, 3.0f, -5.0f, 1.0f };
@@ -169,7 +172,7 @@ void uDX11RenderScene_Demo00::init() {
 	DirectX::XMVECTOR litTar = DirectX::XMVectorSet( 0.0f, 0.0f, 0.0f, 0.0f);
 	DirectX::XMVECTOR litUp  = DirectX::XMVectorSet( 0.0f, 1.0f, 0.0f, 0.0f);
 	mPerspectiveLight.view = DirectX::XMMatrixLookAtLH(litPos, litTar, litUp);
-	mPerspectiveLight.proj = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV2, 1.0f, 1.f, 200.0f);
+	mPerspectiveLight.proj = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV2, 0.1f, 1.f, 200.0f);
 //	mPerspectiveLight.proj = DirectX::XMMatrixOrthographicLH((float)width, (float)height, 1.0f, 100.f);
 
 	//! settings light
@@ -323,6 +326,7 @@ void uDX11RenderScene_Demo00::init() {
 }
 //! @brief 
 void uDX11RenderScene_Demo00::update() {
+	//! objects update
 	static float time = 0.0f;
 	time += ITime->getDeltaTime();
 	int i = 0;
@@ -354,6 +358,40 @@ void uDX11RenderScene_Demo00::update() {
 		i++;
 	}
 
+	//! [control] change camera rotate mode
+	if (IMouse->isTrigger(eMouseInput::RB)) {
+		IMouse->setCurrentlyPosToFixedPos();
+		IMouse->setFixedCursor(true);
+	}
+	if (IMouse->isRelease(eMouseInput::RB)) {
+		IMouse->setFixedCursor(false);
+	}
+	//! [control] camera rotate
+	if(IMouse->isDown(eMouseInput::RB) && IMouse->getMovement() > FLT_EPSILON){
+		float movX, movY;
+		float power = IMouse->getMovement();
+		IMouse->getMoveDirection(movX, movY);
+		movX *= power;
+		movY *= power;
+		if(movX != 0) mCamera3D.rotateY(movX);
+		if(movY != 0) mCamera3D.rotateX(movY);
+		memcpy(&mLightProperty.eyePosition, mCamera3D.getPos().m128_f32, sizeof(mLightProperty.eyePosition));
+	}
+	//! [control] camera move
+	float camMoveSpeed = 0.1f;
+	if (IKeyboard->isDown(DIK_W)) {
+		mCamera3D.movePosLocalAxis(0, 0, camMoveSpeed);
+	}
+	if (IKeyboard->isDown(DIK_A)) {
+		mCamera3D.movePosLocalAxis(-camMoveSpeed, 0, 0);
+	}
+	if (IKeyboard->isDown(DIK_S)) {
+		mCamera3D.movePosLocalAxis(0, 0, -camMoveSpeed);
+	}
+	if (IKeyboard->isDown(DIK_D)) {
+		mCamera3D.movePosLocalAxis(camMoveSpeed, 0, 0);
+	}
+	mCamera3D.makeLookAtViewLH(mPerspective.view);
 }
 //! @brief 
 void uDX11RenderScene_Demo00::render(ID3D11DeviceContext* context) {
