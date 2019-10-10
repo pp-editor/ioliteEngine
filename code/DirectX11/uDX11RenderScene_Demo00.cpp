@@ -92,10 +92,10 @@ void uDX11RenderScene_Demo00::init() {
 	blendDesc.IndependentBlendEnable = FALSE;
 	for(int i = 0; i < _countof(blendDesc.RenderTarget); i++){
 		blendDesc.RenderTarget[i].BlendEnable           = TRUE;
-		blendDesc.RenderTarget[i].SrcBlend              = D3D11_BLEND_ONE;
+		blendDesc.RenderTarget[i].SrcBlend              = D3D11_BLEND_SRC_ALPHA;
 		blendDesc.RenderTarget[i].DestBlend             = D3D11_BLEND_INV_SRC_ALPHA;
 		blendDesc.RenderTarget[i].BlendOp               = D3D11_BLEND_OP_ADD;
-		blendDesc.RenderTarget[i].SrcBlendAlpha         = D3D11_BLEND_ONE;
+		blendDesc.RenderTarget[i].SrcBlendAlpha         = D3D11_BLEND_SRC_ALPHA;
 		blendDesc.RenderTarget[i].DestBlendAlpha        = D3D11_BLEND_INV_SRC_ALPHA;
 		blendDesc.RenderTarget[i].BlendOpAlpha          = D3D11_BLEND_OP_ADD;
 		blendDesc.RenderTarget[i].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
@@ -184,12 +184,13 @@ void uDX11RenderScene_Demo00::init() {
 	mDirectionLight.color   = { 0.4f, 0.4f, 0.4f, 1.0f };
 
 	//! create 2d overlay projection
-	mScreenProj.proj = {
-		 2.f / width,  0.f,          0.f, 0.f,
-		 0.f,         -2.f / height, 0.f, 0.f,
-		 0.f,          0.f,          1.f, 0.f,
-		-1.f,          1.f,          0.f, 1.f,
-	};
+	{
+		float l = 0;
+		float r = (float)width;
+		float t = 0;
+		float b = (float)height;
+		mScreenProj.proj = DirectX::XMMatrixOrthographicOffCenterLH(l, r, b, t, 0, 100);
+	}
 
 	//! write clear-color Texture
 	cDX11Texture dynamicTex;
@@ -322,7 +323,15 @@ void uDX11RenderScene_Demo00::init() {
 	m2DOverlayRender.attach(&mpVShader2D, nullptr, &mpPShader2D, &mpInputLayout2D);
 	m2DOverlayRender.setTexture(m2DOverlay, false);
 	m2DOverlayRender.loadFigure(nFigureData::getRectangle);
-	m2DOverlayRender.updateWorldMatrix(DirectX::XMMatrixIdentity() * DirectX::XMMatrixScaling(w, h, 1.f));
+	m2DOverlayRender.updateWorldMatrix(DirectX::XMMatrixIdentity() * DirectX::XMMatrixScaling(w/2, h/2, 1.f) * DirectX::XMMatrixTranslation(w/2, h/2, 0));
+
+	auto cSpl = new cDX11RenderObject();
+	cSpl->attach(&mpVShader2D, nullptr, &mpPShader2D, &mpInputLayout2D);
+	cSpl->loadFigure(nFigureData::getRectangle);
+	cSpl->createTexture(nFile::getResourcePath("resource/texture/uvtest.png"));
+	cSpl->createSamplerState();
+	cSpl->updateWorldMatrix(DirectX::XMMatrixIdentity() * DirectX::XMMatrixScaling(64, 64, 1) * DirectX::XMMatrixTranslation(64, 64, 0));
+	mpRenderObject2DList.push_back(cSpl);
 }
 //! @brief 
 void uDX11RenderScene_Demo00::update() {
